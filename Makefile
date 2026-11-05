@@ -28,10 +28,39 @@ crustc: examples/hello.crust crust.h crustc.sh
 	./crustc.sh examples/hello.crust
 	./examples/hello
 
-clean:
-	rm -f demo rusty compile_time idioms crustpp_bin examples/hello examples/hello.gen.c examples/real_rust examples/real_rust.gen.c
+# New compiler: implemented exclusively in ISO C11, no awk/sed in this path.
+crustcc: tools/crustcc.c
+	$(CC) -std=c11 -Wall -Wextra -pedantic -Werror $< -o $@
 
-.PHONY: run clean
+examples/full_rust.gen.c: examples/full_rust.rs crustcc
+	./crustcc $< > $@
+
+examples/full_rust: examples/full_rust.gen.c
+	$(CC) -std=c11 -Wall -Wextra -pedantic -Werror $< -o $@
+
+fullrust: examples/full_rust
+	./examples/full_rust
+
+examples/edge_rust.gen.c: examples/edge_rust.rs crustcc
+	./crustcc $< > $@
+
+examples/edge_rust: examples/edge_rust.gen.c
+	$(CC) -std=c11 -Wall -Wextra -pedantic -Werror $< -o $@
+
+check: examples/full_rust examples/edge_rust
+	./examples/full_rust > examples/full_rust.actual.txt
+	diff -u tests/full_rust.expected.txt examples/full_rust.actual.txt
+	./examples/edge_rust > examples/edge_rust.actual.txt
+	diff -u tests/edge_rust.expected.txt examples/edge_rust.actual.txt
+	@if ./crustcc tests/unsupported.rs > examples/unsupported.gen.c 2> examples/unsupported.err.txt; then echo 'expected compiler error' >&2; exit 1; fi
+	grep -q 'unsupported top-level construct' examples/unsupported.err.txt
+	@echo 'crustcc tests: ok'
+
+clean:
+	rm -f demo rusty compile_time idioms crustpp_bin crustcc examples/hello examples/hello.gen.c examples/real_rust examples/real_rust.gen.c examples/full_rust examples/full_rust.gen.c examples/edge_rust examples/edge_rust.gen.c examples/*.actual.txt examples/unsupported.gen.c examples/unsupported.err.txt
+
+.DELETE_ON_ERROR:
+.PHONY: run clean fullrust check rust cplusplus crustc pp
 
 # full Rust-ish syntax (x: i32, -> ret, println!) via awk transpiler, not cpp:
 rust: examples/real_rust.rs tools/crustpp.awk crustpp.sh
