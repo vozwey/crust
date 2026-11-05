@@ -1,0 +1,21 @@
+/* hello.crust — source file in crust dialect.
+ * "Compiled" by:  gcc -E -P -x c hello.crust -o hello.gen.c  (see `make crustc`)
+ * The preprocessor reads THIS file (via the driver), expands all the
+ * Rust-ish macros from crust.h, and emits plain C. gcc then compiles that.
+ */
+#include "crust.h"
+
+fn greet(String name) {
+    println("hello, %s! welcome to crust", name);
+    return 0;
+}
+
+fn main() {
+    let mut count = 0;
+    loop {
+        if (count >= 3) { break; }
+        greet("rustacean");
+        count += 1;
+    }
+    return 0;
+}
