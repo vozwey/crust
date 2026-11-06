@@ -1,0 +1,1 @@
+trait Foo { fn bar(&self); }

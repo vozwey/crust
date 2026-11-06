@@ -1,0 +1,5 @@
+literal=11 field=5
+pair={} sum=6 total=6
+count=6
+hello 2.500000
+ok
